@@ -1,0 +1,23 @@
+version: '3.4'
+
+services:
+  cargoapi:
+    image: ${DOCKER_REGISTRY-}cargoapi
+    build:
+      context: .
+      dockerfile: CargoApi/Dockerfile
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  cargo.queue:
+    image: rabbitmq:management-alpine
+    container_name: CargoSim.Queue
+    hostname: cargosim-queue
+    volumes:
+        - ./.containers/queue/data/:/var/lib/rabbitmq
+        - ./.containers/queue/log/:/var/log/rabbitmq
+    environment:
+        RABBITMQ_DEFAULT_USER: guest
+        RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - 5672:5672
+      - 15672:15672
