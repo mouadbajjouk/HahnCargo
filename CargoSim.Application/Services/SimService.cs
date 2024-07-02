@@ -7,6 +7,8 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
 {
     public async Task Func()
     {
+        var transporter = await legacyClient.BuyTransporter();
+
         int availableCoins = await legacyClient.GetCoinAmount();
 
         var orders = orderDb.GetOrders();

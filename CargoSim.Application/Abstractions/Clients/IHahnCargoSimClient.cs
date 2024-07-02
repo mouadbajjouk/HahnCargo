@@ -4,6 +4,7 @@ namespace CargoSim.Application.Abstractions.Clients;
 
 public interface IHahnCargoSimClient
 {
+    Task<int> BuyTransporter();
     Task<int> GetCoinAmount();
     Task<Grid> GetGrid();
 }
