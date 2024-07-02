@@ -7,7 +7,14 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
 {
     public async Task Func()
     {
-        var transporter = await legacyClient.BuyTransporter();
+        var transporterId = await legacyClient.BuyTransporter();
+
+        if (transporterId < 0)
+            throw new InvalidOperationException("Invalid transporter ID!");
+
+        var transporter = await legacyClient.GetTransporter(transporterId) ?? throw new InvalidOperationException("NULL transporter");
+
+        int transporterLoad = transporter.Load;
 
         int availableCoins = await legacyClient.GetCoinAmount();
 
@@ -15,6 +22,13 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
 
         foreach (var order in orders)
         {
+            var orderLoad = order.Load;
+
+            if (transporterLoad + orderLoad > transporter.Capacity)
+            {
+                continue;
+            }
+
             var (shortestPath, pathCoins, enoughCoins) = await dijkstraService.FindShortestPath(order, availableCoins);
 
             if (!enoughCoins)
@@ -28,7 +42,7 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
                 continue;
             }
 
-            Console.Write($"Available coins are: {availableCoins} -> Accepted order {order.Id} : {order.OriginNodeId} -> {order.TargetNodeId}, it's shortest path is: ");
+            Console.Write($"Available coins are: {availableCoins}, transporter load is: {transporterLoad} -> Accepted order {order.Id} : {order.OriginNodeId} -> {order.TargetNodeId}, it's load is: {orderLoad}, and it's shortest path is: ");
 
             shortestPath.ForEach(i => Console.Write($"{i}->"));
 
@@ -37,6 +51,8 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
             await Console.Out.WriteLineAsync();
 
             availableCoins -= pathCoins;
+
+            transporterLoad += orderLoad;
         }
     }
 }

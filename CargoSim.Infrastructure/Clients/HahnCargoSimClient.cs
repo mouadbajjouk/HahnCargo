@@ -2,6 +2,7 @@
 using CargoSim.Application.Models;
 using CargoSim.Infrastructure.Services;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
 using static MassTransit.Logging.LogCategoryName;
 
@@ -50,5 +51,14 @@ public class HahnCargoSimClient(HttpClient httpClient, JwtService jwtService) : 
             return transporterId;
 
         throw new InvalidOperationException("Can't get transporter ID!");
+    }
+
+    public async Task<Transporter?> GetTransporter(int id)
+    {
+        var token = await jwtService.GetAccessTokenAsync(); // TODO: centralize jwt token
+
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        return await httpClient.GetFromJsonAsync<Transporter>($"CargoTransporter/Get?transporterId={id}");
     }
 }
