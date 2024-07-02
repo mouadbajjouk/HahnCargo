@@ -4,19 +4,24 @@ using CargoSim.Application.Models;
 
 namespace CargoSim.Application.Services;
 
-public class DijkstraService(IGridDb gridDb, ICoinsDb coinsDb)
+public class DijkstraService(IGridDb gridDb, ICoinsDb coinsDb, IHahnCargoSimClient legacyClient)
 {
     private readonly List<Node> nodes = gridDb.Nodes.ToList();
     private readonly List<Edge> edges = gridDb.Edges.ToList();
     private readonly List<Connection> connections = gridDb.Connections.ToList();
-    private int _availableCoins = coinsDb.GetCoins();
+    //private int _availableCoins = await legacyClient.GetCoinAmount();
 
-    public List<int> FindShortestPath(OrderMessage order)
+    public async Task<(List<int> path, bool enoughCoins)> FindShortestPath(OrderMessage order)
     {
+        int availableCoins = await legacyClient.GetCoinAmount();
+
+        //if (availableCoins <= 0)
+
         var originNodeId = order.OriginNodeId;
         var targetNodeId = order.TargetNodeId;
         var expirationDate = DateTime.Parse(order.ExpirationDateUtc);
 
+        //holds the shortest known cost from the origin node to each node in the graph
         var distances = new Dictionary<int, (int Cost, TimeSpan Time)>();
         var previousNodes = new Dictionary<int, int>();
         var unvisitedNodes = new HashSet<int>(nodes.Select(n => n.Id));
@@ -65,10 +70,10 @@ public class DijkstraService(IGridDb gridDb, ICoinsDb coinsDb)
         var path = new List<int>();
         var pathNodeId = targetNodeId;
 
-        if (distances[targetNodeId].Cost > _availableCoins)
+        if (distances[targetNodeId].Cost > availableCoins)
         {
             Console.WriteLine("Insufficient coins to deliver the order.");
-            return path; // Return an empty path to indicate that the order cannot be delivered
+            return (path, enoughCoins: false); // Return an empty path to indicate that the order cannot be delivered
         }
 
         while (previousNodes.ContainsKey(pathNodeId))
@@ -82,6 +87,6 @@ public class DijkstraService(IGridDb gridDb, ICoinsDb coinsDb)
             path.Insert(0, originNodeId);
         }
 
-        return path;
+        return (path, enoughCoins: true);
     }
 }
