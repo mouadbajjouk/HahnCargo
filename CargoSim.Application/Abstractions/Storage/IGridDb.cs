@@ -1,6 +1,6 @@
 ﻿using CargoSim.Application.Models;
 
-namespace CargoSim.Application.Abstractions;
+namespace CargoSim.Application.Abstractions.Storage;
 
 public interface IGridDb
 {

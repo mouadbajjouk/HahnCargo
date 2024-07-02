@@ -1,4 +1,4 @@
-﻿using CargoSim.Application.Abstractions;
+﻿using CargoSim.Application.Abstractions.Storage;
 
 namespace CargoSim.Application.Services;
 

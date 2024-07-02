@@ -1,8 +1,10 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using CargoSim.Application.Abstractions.Clients;
+using CargoSim.Infrastructure.Storage;
+using Microsoft.Extensions.Hosting;
 
-namespace CargoSim.Infrastructure;
+namespace CargoSim.Infrastructure.WorkerServices;
 
-public class GridWorkerService(HahnCargoSimClient legacyClient) : BackgroundService
+public class GridWorkerService(IHahnCargoSimClient legacyClient) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -14,6 +16,6 @@ public class GridWorkerService(HahnCargoSimClient legacyClient) : BackgroundServ
 
         GridDb.Instance.SetConnections(x.Connections);
 
-        
+
     }
 }

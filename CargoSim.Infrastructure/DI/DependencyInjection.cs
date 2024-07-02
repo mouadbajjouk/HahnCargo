@@ -1,26 +1,38 @@
-﻿using CargoSim.Application.Abstractions;
+﻿using CargoSim.Application.Abstractions.Clients;
+using CargoSim.Application.Abstractions.Storage;
+using CargoSim.Infrastructure.Clients;
+using CargoSim.Infrastructure.Consumers;
+using CargoSim.Infrastructure.Services;
+using CargoSim.Infrastructure.Storage;
+using CargoSim.Infrastructure.WorkerServices;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace CargoSim.Infrastructure;
+namespace CargoSim.Infrastructure.DI;
 
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, RabbitMqSettings rabbitMqSettings)
+    {
+        AddStorage(services);
+
+        AddHttpClients(services);
+
+        AddMessaging(services, rabbitMqSettings);
+
+        services.AddHostedService<GridWorkerService>();
+
+
+        return services;
+    }
+
+    private static void AddStorage(IServiceCollection services)
     {
         services.AddSingleton<IOrderDb>(OrderDb.Instance);
 
         services.AddSingleton<IGridDb>(GridDb.Instance);
 
         services.AddSingleton<ICoinsDb>(CoinsDb.Instance);
-
-        AddHttpClients(services);
-
-        services.AddHostedService<GridWorkerService>();
-
-        AddMessaging(services, rabbitMqSettings);
-
-        return services;
     }
 
     private static void AddMessaging(IServiceCollection services, RabbitMqSettings rabbitMqSettings)
@@ -57,7 +69,7 @@ public static class DependencyInjection
 
     private static void AddHttpClients(IServiceCollection services)
     {
-        services.AddHttpClient<HahnCargoSimClient>(httpClient =>
+        services.AddHttpClient<IHahnCargoSimClient, HahnCargoSimClient>(httpClient =>
         {
             httpClient.BaseAddress = new Uri("https://host.docker.internal:7115/"); // TODO : appsettunbgs
         }).ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler

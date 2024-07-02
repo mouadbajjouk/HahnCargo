@@ -1,5 +1,6 @@
 using CargoSim.Application;
 using CargoSim.Infrastructure;
+using CargoSim.Infrastructure.DI;
 
 var builder = WebApplication.CreateBuilder(args);
 

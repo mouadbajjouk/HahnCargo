@@ -1,8 +1,9 @@
 ﻿using CargoSim.Application.Models;
+using CargoSim.Infrastructure.Storage;
 using MassTransit;
 using RabbitMQ.Client.Exceptions;
 
-namespace CargoSim.Infrastructure;
+namespace CargoSim.Infrastructure.Consumers;
 
 public class OrderConsumer() : IConsumer<OrderMessage>
 {
@@ -11,7 +12,9 @@ public class OrderConsumer() : IConsumer<OrderMessage>
         try
         {
             var order = context.Message;
-            
+
+            await Console.Out.WriteLineAsync($"Adding order {order.Id} : from {order.OriginNodeId} -> {order.TargetNodeId}");
+
             OrderDb.Instance.AddOrder(order);
         }
         catch (OperationInterruptedException ex)

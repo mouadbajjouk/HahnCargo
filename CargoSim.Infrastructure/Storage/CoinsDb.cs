@@ -1,6 +1,6 @@
-﻿using CargoSim.Application.Abstractions;
+﻿using CargoSim.Application.Abstractions.Storage;
 
-namespace CargoSim.Infrastructure;
+namespace CargoSim.Infrastructure.Storage;
 
 public class CoinsDb : ICoinsDb
 {

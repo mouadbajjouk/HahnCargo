@@ -1,7 +1,7 @@
-﻿using CargoSim.Application.Abstractions;
+﻿using CargoSim.Application.Abstractions.Storage;
 using CargoSim.Application.Models;
 
-namespace CargoSim.Infrastructure;
+namespace CargoSim.Infrastructure.Storage;
 
 public class OrderDb : IOrderDb
 {

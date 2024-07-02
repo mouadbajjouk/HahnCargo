@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace CargoSim.Infrastructure;
+namespace CargoSim.Infrastructure.Services;
 
 public class JwtService(HttpClient httpClient)
 {
