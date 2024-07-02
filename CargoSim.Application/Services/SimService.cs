@@ -1,16 +1,19 @@
-﻿using CargoSim.Application.Abstractions.Storage;
+﻿using CargoSim.Application.Abstractions.Clients;
+using CargoSim.Application.Abstractions.Storage;
 
 namespace CargoSim.Application.Services;
 
-public class SimService(IOrderDb orderDb, DijkstraService dijkstraService)
+public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, DijkstraService dijkstraService)
 {
     public async Task Func()
     {
+        int availableCoins = await legacyClient.GetCoinAmount();
+
         var orders = orderDb.GetOrders();
 
         foreach (var order in orders)
         {
-            var (shortestPath, enoughCoins) = await dijkstraService.FindShortestPath(order);
+            var (shortestPath, pathCoins, enoughCoins) = await dijkstraService.FindShortestPath(order, availableCoins);
 
             if (!enoughCoins)
             {
@@ -23,11 +26,15 @@ public class SimService(IOrderDb orderDb, DijkstraService dijkstraService)
                 continue;
             }
 
-            Console.Write($"Accepted order {order.Id} : {order.OriginNodeId} -> {order.TargetNodeId}, it's shortest path is: ");
+            Console.Write($"Available coins are: {availableCoins} -> Accepted order {order.Id} : {order.OriginNodeId} -> {order.TargetNodeId}, it's shortest path is: ");
 
             shortestPath.ForEach(i => Console.Write($"{i}->"));
 
-            Console.WriteLine();
+            await Console.Out.WriteAsync($" with a total cost of: {pathCoins}");
+
+            await Console.Out.WriteLineAsync();
+
+            availableCoins -= pathCoins;
         }
     }
 }
