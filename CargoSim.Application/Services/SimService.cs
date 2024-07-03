@@ -1,5 +1,7 @@
 ﻿using CargoSim.Application.Abstractions.Clients;
 using CargoSim.Application.Abstractions.Storage;
+using CargoSim.Application.Extensions;
+using CargoSim.Application.Models;
 
 namespace CargoSim.Application.Services;
 
@@ -20,6 +22,8 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
 
         var orders = orderDb.GetOrders();
 
+        List<int> transporterPath = [];
+
         foreach (var order in orders)
         {
             var orderLoad = order.Load;
@@ -29,9 +33,14 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
                 continue;
             }
 
-            var (shortestPath, pathCoins, enoughCoins) = await dijkstraService.FindShortestPath(order, availableCoins);
+            var (shortestPath, pathCoins, stillHavingEnoughCoins) = await dijkstraService.FindShortestPath(order, availableCoins);
 
-            if (!enoughCoins)
+            if (!OrderEnRoute(shortestPath, transporterPath))
+            {
+                continue;
+            }
+
+            if (!stillHavingEnoughCoins)
             {
                 break;
             }
@@ -42,17 +51,50 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
                 continue;
             }
 
-            Console.Write($"Available coins are: {availableCoins}, transporter load is: {transporterLoad} -> Accepted order {order.Id} : {order.OriginNodeId} -> {order.TargetNodeId}, it's load is: {orderLoad}, and it's shortest path is: ");
+            transporterPath.AddRange(shortestPath);
 
-            shortestPath.ForEach(i => Console.Write($"{i}->"));
-
-            await Console.Out.WriteAsync($" with a total cost of: {pathCoins}");
-
-            await Console.Out.WriteLineAsync();
+            await WriteOrderInfo(transporterLoad, availableCoins, order, orderLoad, shortestPath, pathCoins);
 
             availableCoins -= pathCoins;
 
             transporterLoad += orderLoad;
         }
+    }
+
+    private static bool OrderEnRoute(List<int> orderPath, List<int> transporterPath)
+    {
+        // Count = 0 means that the transporter has just started, so return true to process the first order.
+        if (transporterPath.Count == 0)
+        {
+            return true;
+        }
+
+        // E.g. TruckPath = [A,B,C,D,E]
+        // Ex1: Order 2: B->C->D => [B,C,D] : ACCEPT IT (it's en route)
+        // Ex2: Order 2: E->D->C => [E,D,C] : (because it's origin node = currentOrder.targetNode) ----> transporterPath = [A,B,C,D,E,D,C]
+        if (transporterPath[^1] == orderPath[0])
+        {
+            transporterPath.AddRange(orderPath);
+
+            return true;
+        }
+
+        if (transporterPath.ContainsSublist(orderPath))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static async Task WriteOrderInfo(int transporterLoad, int availableCoins, OrderMessage order, int orderLoad, List<int> shortestPath, int pathCoins)
+    {
+        Console.Write($"Available coins are: {availableCoins}, transporter load is: {transporterLoad} -> Accepted order {order.Id} : {order.OriginNodeId} -> {order.TargetNodeId}, it's load is: {orderLoad}, and it's shortest path is: ");
+
+        shortestPath.ForEach(i => Console.Write($"{i}->"));
+
+        await Console.Out.WriteAsync($" with a total cost of: {pathCoins}");
+
+        await Console.Out.WriteLineAsync();
     }
 }
