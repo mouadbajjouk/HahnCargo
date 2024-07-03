@@ -15,7 +15,5 @@ public class GridWorkerService(IHahnCargoSimClient legacyClient) : BackgroundSer
         GridDb.Instance.SetEdges(x.Edges);
 
         GridDb.Instance.SetConnections(x.Connections);
-
-
     }
 }

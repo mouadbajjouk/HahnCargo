@@ -1,5 +1,4 @@
-﻿using CargoSim.Application.Abstractions.Clients;
-using CargoSim.Application.Abstractions.Storage;
+﻿using CargoSim.Application.Abstractions.Storage;
 using CargoSim.Application.Models;
 
 namespace CargoSim.Application.Services;
@@ -11,7 +10,7 @@ public class DijkstraService(IGridDb gridDb, ICoinsDb coinsDb)
     private readonly List<Connection> connections = gridDb.Connections.ToList();
     //private int _availableCoins = await legacyClient.GetCoinAmount();
 
-    public async Task<(List<int> path, int pathCoins, bool stillHavingEnoughCoins)> FindShortestPath(OrderMessage order, int availableCoins)
+    public async Task<(List<int> path, int pathCoins, bool stillHavingEnoughCoinsAfterAcceptingTheOrder)> FindShortestPath(OrderMessage order, int availableCoins)
     {
         //if (availableCoins <= 0)
 
@@ -68,12 +67,13 @@ public class DijkstraService(IGridDb gridDb, ICoinsDb coinsDb)
         var path = new List<int>();
         var pathNodeId = targetNodeId;
 
-        int pathCoins= distances[targetNodeId].Cost;
+        int pathCoins = distances[targetNodeId].Cost;
 
         if (distances[targetNodeId].Cost > availableCoins)
         {
-            Console.WriteLine("Insufficient coins to deliver the order.");
-            return (path, pathCoins, stillHavingEnoughCoins: false); // Return an empty path to indicate that the order cannot be delivered
+            await Console.Out.WriteLineAsync("Insufficient coins to deliver the order.");
+
+            return (path, pathCoins, stillHavingEnoughCoinsAfterAcceptingTheOrder: false); // Return an empty path to indicate that the order cannot be delivered
         }
 
         while (previousNodes.ContainsKey(pathNodeId))
@@ -87,6 +87,6 @@ public class DijkstraService(IGridDb gridDb, ICoinsDb coinsDb)
             path.Insert(0, originNodeId);
         }
 
-        return (path, pathCoins, stillHavingEnoughCoins: true);
+        return (path, pathCoins, stillHavingEnoughCoinsAfterAcceptingTheOrder: true);
     }
 }

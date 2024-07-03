@@ -26,6 +26,9 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
 
         foreach (var order in orders)
         {
+            await Console.Out.WriteLineAsync($"Processing order: {order.Id}");
+
+
             var orderLoad = order.Load;
 
             if (transporterLoad + orderLoad > transporter.Capacity)
@@ -33,21 +36,24 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
                 continue;
             }
 
-            var (shortestPath, pathCoins, stillHavingEnoughCoins) = await dijkstraService.FindShortestPath(order, availableCoins);
-
-            if (!OrderEnRoute(shortestPath, transporterPath))
-            {
-                continue;
-            }
-
-            if (!stillHavingEnoughCoins)
-            {
-                break;
-            }
+            var (shortestPath, pathCoins, stillHavingEnoughCoinsAfterAcceptingTheOrder) = await dijkstraService.FindShortestPath(order, availableCoins);
 
             if (shortestPath.Count == 0)
             {
                 Console.WriteLine($"Rejected order {order.Id}");
+                continue;
+            }
+            
+            if (!stillHavingEnoughCoinsAfterAcceptingTheOrder)
+            {
+                await Console.Out.WriteLineAsync($"stillHavingEnoughCoinsAfterAcceptingTheOrder: {stillHavingEnoughCoinsAfterAcceptingTheOrder}");
+                break;
+            }
+
+            if (!OrderEnRoute(shortestPath, transporterPath))
+            {
+                Console.Write($"Order {order.Id} not en route!");
+
                 continue;
             }
 
@@ -69,7 +75,7 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
             return true;
         }
 
-        // E.g. TruckPath = [A,B,C,D,E]
+        // E.g. TransporterPath = [A,B,C,D,E]
         // Ex1: Order 2: B->C->D => [B,C,D] : ACCEPT IT (it's en route)
         // Ex2: Order 2: E->D->C => [E,D,C] : (because it's origin node = currentOrder.targetNode) ----> transporterPath = [A,B,C,D,E,D,C]
         if (transporterPath[^1] == orderPath[0])
