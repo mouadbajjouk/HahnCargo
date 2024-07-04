@@ -10,6 +10,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CargoSim.Infrastructure.DI;
 
+public class GridWorkerCompletionSignal
+{
+    public TaskCompletionSource<bool> CompletionSource { get; } = new TaskCompletionSource<bool>();
+}
+
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, RabbitMqSettings rabbitMqSettings)
@@ -20,8 +25,11 @@ public static class DependencyInjection
 
         AddMessaging(services, rabbitMqSettings);
 
+        services.AddSingleton<GridWorkerCompletionSignal>();
+
         services.AddHostedService<GridWorkerService>();
 
+        services.AddHostedService<SimWorkerService>();
 
         return services;
     }

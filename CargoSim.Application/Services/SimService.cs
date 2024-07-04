@@ -1,18 +1,24 @@
 ﻿using CargoSim.Application.Abstractions.Clients;
+using CargoSim.Application.Abstractions.Services;
 using CargoSim.Application.Abstractions.Storage;
 using CargoSim.Application.Extensions;
 using CargoSim.Application.Models;
 
 namespace CargoSim.Application.Services;
 
-public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, DijkstraService dijkstraService)
+public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, DijkstraService dijkstraService) : ISimService
 {
-    public async Task Func()
+    public async Task Func(bool firstExecution)
     {
-        var transporterId = await legacyClient.BuyTransporter();
+        int transporterId = 0;
 
-        if (transporterId < 0)
-            throw new InvalidOperationException("Invalid transporter ID!");
+        if (firstExecution)
+        {
+            transporterId = await legacyClient.BuyTransporter();
+
+            if (transporterId < 0)
+                throw new InvalidOperationException("Invalid transporter ID!");
+        }
 
         var transporter = await legacyClient.GetTransporter(transporterId) ?? throw new InvalidOperationException("NULL transporter");
 
@@ -43,7 +49,7 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
                 Console.WriteLine($"Rejected order {order.Id}");
                 continue;
             }
-            
+
             if (!stillHavingEnoughCoinsAfterAcceptingTheOrder)
             {
                 await Console.Out.WriteLineAsync($"stillHavingEnoughCoinsAfterAcceptingTheOrder: {stillHavingEnoughCoinsAfterAcceptingTheOrder}");

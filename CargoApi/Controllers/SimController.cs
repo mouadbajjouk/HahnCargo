@@ -11,6 +11,6 @@ public class SimController(SimService simService) : ControllerBase
     [HttpGet("")]
     public async Task Get()
     {
-        await simService.Func();
+        await simService.Func(true);
     }
 }
