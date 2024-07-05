@@ -3,24 +3,29 @@ using CargoSim.Application.Abstractions.Services;
 using CargoSim.Application.Abstractions.Storage;
 using CargoSim.Application.Extensions;
 using CargoSim.Application.Models;
+using Shared;
 
 namespace CargoSim.Application.Services;
 
-public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, DijkstraService dijkstraService) : ISimService
+public class SimService(IHahnCargoSimClient legacyClient,
+                        IOrderDb orderDb,
+                        ITransporterDb transporterDb,
+                        IStateService stateService,
+                        IDijkstraService dijkstraService) : ISimService
 {
-    public async Task Func(bool firstExecution)
+    public async Task Func(Transporter transporter)
     {
-        int transporterId = 0;
+        //int transporterId = 0;
 
-        if (firstExecution)
-        {
-            transporterId = await legacyClient.BuyTransporter();
+        //if (firstExecution)
+        //{
+        //    transporterId = await legacyClient.BuyTransporter();
 
-            if (transporterId < 0)
-                throw new InvalidOperationException("Invalid transporter ID!");
-        }
+        //    if (transporterId < 0)
+        //        throw new InvalidOperationException("Invalid transporter ID!");
+        //}
 
-        var transporter = await legacyClient.GetTransporter(transporterId) ?? throw new InvalidOperationException("NULL transporter");
+        //var transporter = await legacyClient.GetTransporter(transporterId) ?? throw new InvalidOperationException("NULL transporter");
 
         int transporterLoad = transporter.Load;
 
@@ -67,10 +72,19 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
 
             await WriteOrderInfo(transporterLoad, availableCoins, order, orderLoad, shortestPath, pathCoins);
 
+            await legacyClient.AcceptOrder(order.Id);
+
             availableCoins -= pathCoins;
 
             transporterLoad += orderLoad;
         }
+    }
+
+    public async Task<List<int>> GetPath(OrderMessage order)
+    {
+        var (shortestPath, n, g) = await dijkstraService.FindShortestPath(order, 1000);
+
+        return shortestPath;
     }
 
     private static bool OrderEnRoute(List<int> orderPath, List<int> transporterPath)
@@ -108,5 +122,74 @@ public class SimService(IHahnCargoSimClient legacyClient, IOrderDb orderDb, Dijk
         await Console.Out.WriteAsync($" with a total cost of: {pathCoins}");
 
         await Console.Out.WriteLineAsync();
+    }
+
+    public async Task Start() => await legacyClient.StartSimulation();
+
+    public async Task Stop() => await legacyClient.StopSimulation();
+
+    public async Task Move(bool firstTime)
+    {
+        var orders = orderDb.GetOrders();
+
+        if (firstTime)
+        {
+            var firstOrderPath = await GetPath(orders[0]);
+
+            stateService.SetCurrentOrder(orders[0]);
+
+            stateService.SetCurrentPath(firstOrderPath);
+
+            stateService.SetCurrentPathIndex(stateService.CurrentPathIndex);
+
+            int firstTransporterPositionNodeId = firstOrderPath[stateService.CurrentPathIndex];
+
+            var transporterId = await legacyClient.BuyTransporter(firstTransporterPositionNodeId);
+
+            var newTransporter = await legacyClient.GetTransporter(transporterId) ?? throw new InvalidOperationException("NULL transporter");
+
+            transporterDb.Add(newTransporter);
+
+            stateService.SetCurrentTransporter(newTransporter);
+
+            await legacyClient.AcceptOrder(orders[0].Id); 
+
+            await legacyClient.Move(newTransporter.Id, firstOrderPath[stateService.CurrentPathIndex + 1]);
+
+            stateService.SetCurrentPathIndex(stateService.CurrentPathIndex + 1);
+        }
+
+        if (stateService.CurrentOrder is null || stateService.CurrentTransporter.InTransit)
+        {
+            return;
+        }
+
+        if ((stateService.CurrentPathIndex + 1) < stateService.CurrentOrderPath.Count)
+        {
+            await legacyClient.Move(stateService.CurrentTransporter.Id, stateService.CurrentOrderPath[stateService.CurrentPathIndex + 1]);
+
+            var updatedTransporter = await legacyClient.GetTransporter(stateService.CurrentTransporter.Id) ?? throw new InvalidOperationException("NULL transporter");
+
+            stateService.SetCurrentTransporter(updatedTransporter);
+        }
+        else
+        {
+            // order arrived
+            // ++ coins
+        }
+
+
+        stateService.SetCurrentPathIndex(stateService.CurrentPathIndex + 1);
+
+
+        //Transporter currentTransporter = null!;
+
+
+        //if (transporterDb.GetAll().Count == 0)
+        //{
+
+        //}
+
+        //legacyClient.Move(currentTransporter.Id,);
     }
 }

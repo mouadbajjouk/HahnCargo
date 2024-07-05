@@ -8,9 +8,11 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.AddSingleton<IStateService, StateService>();
+
         services.AddSingleton<ISimService, SimService>();
 
-        services.AddSingleton<DijkstraService, DijkstraService>();
+        services.AddSingleton<IDijkstraService, DijkstraService>();
 
         return services;
     }

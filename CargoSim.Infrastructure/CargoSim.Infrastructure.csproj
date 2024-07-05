@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CargoSim.Application\CargoSim.Application.csproj" />
+    <ProjectReference Include="..\CargoSim.Shared\Shared\Shared.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-﻿namespace CargoSim.Application.Extensions;
+﻿namespace Shared;
 
 public static class ListExtensions
 {

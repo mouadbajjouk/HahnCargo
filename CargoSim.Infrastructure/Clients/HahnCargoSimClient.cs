@@ -4,7 +4,6 @@ using CargoSim.Infrastructure.Services;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using static MassTransit.Logging.LogCategoryName;
 
 namespace CargoSim.Infrastructure.Clients;
 
@@ -35,13 +34,13 @@ public class HahnCargoSimClient(HttpClient httpClient, JwtService jwtService) : 
         throw new InvalidOperationException("Can't get coin amount!");
     }
 
-    public async Task<int> BuyTransporter()
+    public async Task<int> BuyTransporter(int atPosition)
     {
         var token = await jwtService.GetAccessTokenAsync(); // TODO: centralize jwt token
 
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var response = await httpClient.PostAsync("CargoTransporter/Buy?positionNodeId=0", null); // TODO: position node isn't always 0 !!!
+        var response = await httpClient.PostAsync($"CargoTransporter/Buy?positionNodeId={atPosition}", null); // TODO: position node isn't always 0 !!!
 
         response.EnsureSuccessStatusCode();
 
@@ -60,5 +59,49 @@ public class HahnCargoSimClient(HttpClient httpClient, JwtService jwtService) : 
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         return await httpClient.GetFromJsonAsync<Transporter>($"CargoTransporter/Get?transporterId={id}");
+    }
+
+    public async Task StartSimulation()
+    {
+        var token = await jwtService.GetAccessTokenAsync(); // TODO: centralize jwt token
+
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await httpClient.PostAsync("Sim/Start", null); // TODO: position node isn't always 0 !!!
+
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task StopSimulation()
+    {
+        var token = await jwtService.GetAccessTokenAsync(); // TODO: centralize jwt token
+
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await httpClient.PostAsync("Sim/Stop", null); // TODO: position node isn't always 0 !!!
+
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task Move(int transporterId, int targetNodeId)
+    {
+        var token = await jwtService.GetAccessTokenAsync(); // TODO: centralize jwt token
+
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await httpClient.PutAsync($"CargoTransporter/Move?transporterId={transporterId}&targetNodeId={targetNodeId}", null); // TODO: position node isn't always 0 !!!
+
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task AcceptOrder(int orderId)
+    {
+        var token = await jwtService.GetAccessTokenAsync(); // TODO: centralize jwt token
+
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await httpClient.PostAsync($"Order/Accept?orderId={orderId}", null);
+
+        response.EnsureSuccessStatusCode();
     }
 }

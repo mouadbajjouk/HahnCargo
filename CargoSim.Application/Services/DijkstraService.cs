@@ -1,9 +1,10 @@
-﻿using CargoSim.Application.Abstractions.Storage;
+﻿using CargoSim.Application.Abstractions.Services;
+using CargoSim.Application.Abstractions.Storage;
 using CargoSim.Application.Models;
 
 namespace CargoSim.Application.Services;
 
-public class DijkstraService(IGridDb gridDb, ICoinsDb coinsDb)
+public class DijkstraService(IGridDb gridDb, ICoinsDb coinsDb) : IDijkstraService
 {
     private readonly List<Node> nodes = gridDb.Nodes.ToList();
     private readonly List<Edge> edges = gridDb.Edges.ToList();
