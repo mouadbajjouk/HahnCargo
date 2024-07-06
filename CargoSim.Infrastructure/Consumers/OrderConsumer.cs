@@ -1,20 +1,22 @@
 ﻿using CargoSim.Application.Abstractions.Clients;
 using CargoSim.Application.Abstractions.Services;
-using CargoSim.Application.Abstractions.Storage;
 using CargoSim.Application.Models;
-using CargoSim.Application.Services;
 using CargoSim.Infrastructure.Storage;
 using MassTransit;
 using RabbitMQ.Client.Exceptions;
 using Shared;
-using static MassTransit.Logging.LogCategoryName;
 
 namespace CargoSim.Infrastructure.Consumers;
 
 public class OrderConsumer(IStateService stateService, IDijkstraService dijkstraService, IHahnCargoSimClient legacyClient) : IConsumer<OrderMessage>
 {
+    private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+
+
     public async Task Consume(ConsumeContext<OrderMessage> context)
     {
+        await _semaphore.WaitAsync();
+
         try
         {
             if (stateService.CurrentTransporter is null) // TODO: if no transporter,
@@ -37,11 +39,17 @@ public class OrderConsumer(IStateService stateService, IDijkstraService dijkstra
 
                 var dijkstraResult = await dijkstraService.FindShortestPath(firstOrder, await legacyClient.GetCoinAmount());
 
+                await Console.Out.WriteLineAsync($"First order ID = {firstOrder.Id}, it's path is: {string.Join("->", dijkstraResult.path)}");
+
+                stateService.CurrentTransporterPath.AddRange(dijkstraResult.path);
+
+                await Console.Out.WriteLineAsync($"Global CurrentTransporterPath 1: {string.Join("->", stateService.CurrentTransporterPath)}");
+
                 stateService.SetCurrentOrder(firstOrder);
 
                 stateService.SetCurrentPath(dijkstraResult.path);
 
-                stateService.SetCurrentPathIndex(stateService.CurrentPathIndex);
+                //stateService.SetCurrentPathIndex(stateService.CurrentPathIndex);
 
                 return;
             }
@@ -57,11 +65,11 @@ public class OrderConsumer(IStateService stateService, IDijkstraService dijkstra
                 return;
             }
 
-            var(shortestPath, pathCoins, stillHavingEnoughCoinsAfterAcceptingTheOrder) = await dijkstraService.FindShortestPath(order, availableCoins);
+            var (shortestPath, pathCoins, stillHavingEnoughCoinsAfterAcceptingTheOrder) = await dijkstraService.FindShortestPath(order, availableCoins);
 
             if (shortestPath.Count == 0)
             {
-                Console.WriteLine($"Rejected order {order.Id}");
+                await Console.Out.WriteLineAsync($"Rejected order {order.Id}");
 
                 return;
             }
@@ -75,7 +83,7 @@ public class OrderConsumer(IStateService stateService, IDijkstraService dijkstra
 
             if (!OrderEnRoute(shortestPath, stateService.CurrentTransporterPath))
             {
-                Console.Write($"Order {order.Id} not en route!");
+                await Console.Out.WriteLineAsync($"Order {order.Id} not en route!");
 
                 return;
             }
@@ -85,6 +93,10 @@ public class OrderConsumer(IStateService stateService, IDijkstraService dijkstra
             OrderDb.Instance.AddOrder(order);
 
             await legacyClient.AcceptOrder(order.Id);
+
+            await Console.Out.WriteLineAsync($"Accepted order {order.Id}, it's path is: {string.Join("->", shortestPath)}");
+
+            await Console.Out.WriteLineAsync($"Global CurrentTransporterPath 2: {string.Join("->", stateService.CurrentTransporterPath)}");
         }
         catch (OperationInterruptedException ex)
         {
@@ -93,6 +105,10 @@ public class OrderConsumer(IStateService stateService, IDijkstraService dijkstra
         catch (Exception ex)
         {
             Console.WriteLine($"General Exception: {ex.Message}");
+        }
+        finally
+        {
+            _semaphore.Release();
         }
 
         await Task.CompletedTask;
@@ -111,7 +127,7 @@ public class OrderConsumer(IStateService stateService, IDijkstraService dijkstra
         // Ex2: Order 2: E->D->C => [E,D,C] : (because it's origin node = currentOrder.targetNode) ----> transporterPath = [A,B,C,D,E,D,C]
         if (transporterPath[^1] == orderPath[0])
         {
-            transporterPath.AddRange(orderPath);
+            transporterPath.AddRange(orderPath.GetRange(1, orderPath.Count - 1));
 
             return true;
         }

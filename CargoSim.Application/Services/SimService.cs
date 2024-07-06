@@ -1,7 +1,6 @@
 ﻿using CargoSim.Application.Abstractions.Clients;
 using CargoSim.Application.Abstractions.Services;
 using CargoSim.Application.Abstractions.Storage;
-using CargoSim.Application.Extensions;
 using CargoSim.Application.Models;
 using Shared;
 
@@ -13,6 +12,16 @@ public class SimService(IHahnCargoSimClient legacyClient,
                         IStateService stateService,
                         IDijkstraService dijkstraService) : ISimService
 {
+    public async Task<Transporter?> GetCargo()
+    {
+        return await legacyClient.GetTransporter(stateService.CurrentTransporter.Id);
+    }
+
+    public async Task CreateOrders()
+    {
+        await legacyClient.CreateOrders();
+    }
+
     public async Task Func(Transporter transporter)
     {
         //int transporterId = 0;
@@ -130,33 +139,40 @@ public class SimService(IHahnCargoSimClient legacyClient,
 
     public async Task Move(bool firstTime)
     {
+        stateService.CurrentTransporter = await GetCargo()!; // TODO: null
+
         var orders = orderDb.GetOrders();
 
         if (firstTime)
         {
-            var firstOrderPath = await GetPath(orders[0]);
+            //var firstOrderPath = await GetPath(orders[0]);
 
-            stateService.SetCurrentOrder(orders[0]);
+            //stateService.SetCurrentOrder(orders[0]);
 
-            stateService.SetCurrentPath(firstOrderPath);
+            //stateService.SetCurrentPath(firstOrderPath);
 
-            stateService.SetCurrentPathIndex(stateService.CurrentPathIndex);
+            //stateService.SetCurrentPathIndex(stateService.CurrentPathIndex);
 
-            int firstTransporterPositionNodeId = firstOrderPath[stateService.CurrentPathIndex];
+            //int firstTransporterPositionNodeId = firstOrderPath[stateService.CurrentPathIndex];
 
-            var transporterId = await legacyClient.BuyTransporter(firstTransporterPositionNodeId);
+            //var transporterId = await legacyClient.BuyTransporter(firstTransporterPositionNodeId);
 
-            var newTransporter = await legacyClient.GetTransporter(transporterId) ?? throw new InvalidOperationException("NULL transporter");
+            //var newTransporter = await legacyClient.GetTransporter(transporterId) ?? throw new InvalidOperationException("NULL transporter");
 
-            transporterDb.Add(newTransporter);
+            //transporterDb.Add(newTransporter);
 
-            stateService.SetCurrentTransporter(newTransporter);
+            //stateService.SetCurrentTransporter(newTransporter);
 
-            await legacyClient.AcceptOrder(orders[0].Id); 
+            //await legacyClient.AcceptOrder(orders[0].Id); 
 
-            await legacyClient.Move(newTransporter.Id, firstOrderPath[stateService.CurrentPathIndex + 1]);
+            //await legacyClient.Move(stateService.CurrentTransporter.Id, stateService.CurrentTransporterPath[stateService.CurrentPathIndex + 1]);
+            await legacyClient.Move(stateService.CurrentTransporter.Id, stateService.CurrentTransporterPath[1]);
 
-            stateService.SetCurrentPathIndex(stateService.CurrentPathIndex + 1);
+            stateService.CurrentTransporterPath.RemoveAt(0);
+
+            return;
+
+            //stateService.SetCurrentPathIndex(stateService.CurrentPathIndex);
         }
 
         if (stateService.CurrentOrder is null || stateService.CurrentTransporter.InTransit)
@@ -164,32 +180,41 @@ public class SimService(IHahnCargoSimClient legacyClient,
             return;
         }
 
-        if ((stateService.CurrentPathIndex + 1) < stateService.CurrentOrderPath.Count)
+        if (1 < stateService.CurrentTransporterPath.Count)
         {
-            await legacyClient.Move(stateService.CurrentTransporter.Id, stateService.CurrentOrderPath[stateService.CurrentPathIndex + 1]);
+            if (stateService.CurrentOrder.TargetNodeId == stateService.CurrentTransporterPath[stateService.CurrentPathIndex])
+            {
+                // order arrived
+                orderDb.Delete(orderDb.GetOrders().Find(order => order.Id == stateService.CurrentOrder.Id));
 
-            var updatedTransporter = await legacyClient.GetTransporter(stateService.CurrentTransporter.Id) ?? throw new InvalidOperationException("NULL transporter");
+                stateService.SetCurrentOrder(orderDb.GetOrders().First()); // TODO: like a queue, maybe implement a queue instead of list !!!
+            }
 
-            stateService.SetCurrentTransporter(updatedTransporter);
+            await legacyClient.Move(stateService.CurrentTransporter.Id, stateService.CurrentTransporterPath[stateService.CurrentPathIndex + 1]);
+
+            stateService.CurrentTransporterPath.RemoveAt(stateService.CurrentPathIndex);
+
+            //stateService.SetCurrentPathIndex(stateService.CurrentPathIndex + 1);
+
+            //var updatedTransporter = await legacyClient.GetTransporter(stateService.CurrentTransporter.Id) ?? throw new InvalidOperationException("NULL transporter");
+
+            //stateService.SetCurrentTransporter(updatedTransporter);
         }
         else
         {
             // order arrived
             // ++ coins
+
+            orderDb.Delete(orderDb.GetOrders().Find(order => order.Id == stateService.CurrentOrder.Id));
+
+            stateService.SetCurrentOrder(orderDb.GetOrders().First()); // TODO: like a queue, maybe implement a queue instead of list !!!
+
+            //stateService.SetCurrentPath(dijkstraResult.path); // transporter path has the global path
+
+            //stateService.SetCurrentPathIndex(stateService.CurrentPathIndex);
         }
 
 
-        stateService.SetCurrentPathIndex(stateService.CurrentPathIndex + 1);
-
-
-        //Transporter currentTransporter = null!;
-
-
-        //if (transporterDb.GetAll().Count == 0)
-        //{
-
-        //}
-
-        //legacyClient.Move(currentTransporter.Id,);
+        //stateService.SetCurrentPathIndex(stateService.CurrentPathIndex + 1);
     }
 }

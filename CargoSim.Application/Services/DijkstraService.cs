@@ -43,7 +43,7 @@ public class DijkstraService(IGridDb gridDb, ICoinsDb coinsDb) : IDijkstraServic
             unvisitedNodes.Remove(currentNodeId);
 
             var neighborConnections = connections
-                .Where(c => c.FirstNodeId == currentNodeId || c.SecondNodeId == currentNodeId)
+                .Where(c => c.FirstNodeId == currentNodeId)// || c.SecondNodeId == currentNodeId)
                 .ToList();
 
             foreach (var connection in neighborConnections)

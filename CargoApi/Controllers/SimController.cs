@@ -9,10 +9,16 @@ namespace CargoApi.Controllers;
 [ApiController]
 public class SimController(ISimService simService, IStateService stateService) : ControllerBase
 {
-    [HttpGet("")]
-    public async Task Get()
+    [HttpGet("cargo")]
+    public async Task<IActionResult> GetCargo()
     {
-        await simService.Func(null);
+        return Ok(await simService.GetCargo());
+    }
+
+    [HttpGet("orders/create")]
+    public async Task CreateOrders()
+    {
+        await simService.CreateOrders();
     }
 
     [HttpGet("move")]

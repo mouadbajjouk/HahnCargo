@@ -5,6 +5,8 @@ namespace CargoSim.Application.Services;
 
 public class StateService : IStateService // TODO: set setters to private
 {
+    public string JwtToken { get; set; }
+
     public bool IsFirstTime { get; set; } = true;
 
     public OrderMessage CurrentOrder { get; set; } = default!;

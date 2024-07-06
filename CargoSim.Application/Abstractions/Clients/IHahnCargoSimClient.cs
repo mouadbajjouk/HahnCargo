@@ -6,6 +6,7 @@ public interface IHahnCargoSimClient
 {
     Task AcceptOrder(int orderId);
     Task<int> BuyTransporter(int atPosition);
+    Task CreateOrders();
     Task<int> GetCoinAmount();
     Task<Grid> GetGrid();
     Task<Transporter?> GetTransporter(int id);

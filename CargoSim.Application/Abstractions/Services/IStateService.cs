@@ -10,6 +10,7 @@ public interface IStateService
     int CurrentPathIndex { get; set; }
     Transporter CurrentTransporter { get; set; }
     List<int> CurrentTransporterPath { get; set; }
+    string JwtToken { get; set; }
 
     void SetCurrentOrder(OrderMessage currentOrder);
     void SetCurrentPath(List<int> currentPath);

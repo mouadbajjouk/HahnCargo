@@ -40,4 +40,9 @@ public class OrderDb : IOrderDb
     {
         return _orders.ToList();
     }
+
+    public void Delete(OrderMessage order)
+    {
+        _orders.Remove(order);
+    }
 }
