@@ -10,4 +10,5 @@ public interface ISimService
     Task Move(bool firstTime);
     Task CreateOrders();
     Task<Transporter?> GetCargo();
+    Graph GetGraph();
 }

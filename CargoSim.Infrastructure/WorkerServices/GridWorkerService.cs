@@ -5,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace CargoSim.Infrastructure.WorkerServices;
 
-public class GridWorkerService(IHahnCargoSimClient legacyClient, GridWorkerCompletionSignal _completionSignal) : BackgroundService
+public class GridWorkerService(IHahnCargoSimClient legacyClient, GridWorkerCompletionSignal completionSignal) : BackgroundService
 {
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -18,6 +18,6 @@ public class GridWorkerService(IHahnCargoSimClient legacyClient, GridWorkerCompl
 
         GridDb.Instance.SetConnections(x.Connections);
 
-        _completionSignal.CompletionSource.SetResult(true);
+        completionSignal.CompletionSource.SetResult(true);
     }
 }

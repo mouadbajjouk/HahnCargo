@@ -8,10 +8,24 @@ namespace CargoSim.Application.Services;
 
 public class SimService(IHahnCargoSimClient legacyClient,
                         IOrderDb orderDb,
+                        IGridDb gridDb,
                         ITransporterDb transporterDb,
                         IStateService stateService,
                         IDijkstraService dijkstraService) : ISimService
 {
+    public Graph GetGraph()
+    {
+        var graphNodes = gridDb.Nodes.ToList().ConvertAll(node => new GraphNode(node.Id, node.Name));
+
+
+        var graphLinks = gridDb.Connections.ToList().ConvertAll(connection => new GraphLink(connection.Id,
+                                                                                            connection.FirstNodeId.ToString(),
+                                                                                            connection.SecondNodeId.ToString(),
+                                                                                            connection.Id.ToString()));
+
+        return new Graph(graphNodes, graphLinks);
+    }
+
     public async Task<Transporter?> GetCargo()
     {
         return await legacyClient.GetTransporter(stateService.CurrentTransporter.Id);

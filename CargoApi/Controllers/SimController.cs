@@ -9,6 +9,12 @@ namespace CargoApi.Controllers;
 [ApiController]
 public class SimController(ISimService simService, IStateService stateService) : ControllerBase
 {
+    [HttpGet("graph")]
+    public IActionResult GetGraph()
+    {
+        return Ok(simService.GetGraph());
+    }
+
     [HttpGet("cargo")]
     public async Task<IActionResult> GetCargo()
     {

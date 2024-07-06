@@ -1,6 +1,7 @@
 ﻿using CargoSim.Application.Abstractions.Clients;
 using CargoSim.Application.Abstractions.Services;
 using CargoSim.Application.Models;
+using CargoSim.Infrastructure.DI;
 using CargoSim.Infrastructure.Storage;
 using MassTransit;
 using RabbitMQ.Client.Exceptions;
@@ -8,13 +9,18 @@ using Shared;
 
 namespace CargoSim.Infrastructure.Consumers;
 
-public class OrderConsumer(IStateService stateService, IDijkstraService dijkstraService, IHahnCargoSimClient legacyClient) : IConsumer<OrderMessage>
+public class OrderConsumer(IStateService stateService,
+                           IDijkstraService dijkstraService,
+                           IHahnCargoSimClient legacyClient,
+                           GridWorkerCompletionSignal completionSignal) : IConsumer<OrderMessage>
 {
     private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
 
     public async Task Consume(ConsumeContext<OrderMessage> context)
     {
+        await completionSignal.CompletionSource.Task;
+
         await _semaphore.WaitAsync();
 
         try
