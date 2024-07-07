@@ -4,17 +4,14 @@ using CargoSim.Application.Models;
 
 namespace CargoSim.Application.Services;
 
-public class DijkstraService(IGridDb gridDb, ICoinsDb coinsDb) : IDijkstraService
+public class DijkstraService(IGridDb gridDb) : IDijkstraService
 {
     private readonly List<Node> nodes = gridDb.Nodes.ToList();
     private readonly List<Edge> edges = gridDb.Edges.ToList();
     private readonly List<Connection> connections = gridDb.Connections.ToList();
-    //private int _availableCoins = await legacyClient.GetCoinAmount();
 
     public async Task<(List<int> path, int pathCoins, bool stillHavingEnoughCoinsAfterAcceptingTheOrder)> FindShortestPath(OrderMessage order, int availableCoins)
     {
-        //if (availableCoins <= 0)
-
         var originNodeId = order.OriginNodeId;
         var targetNodeId = order.TargetNodeId;
         var expirationDate = DateTime.Parse(order.ExpirationDateUtc);
@@ -43,7 +40,7 @@ public class DijkstraService(IGridDb gridDb, ICoinsDb coinsDb) : IDijkstraServic
             unvisitedNodes.Remove(currentNodeId);
 
             var neighborConnections = connections
-                .Where(c => c.FirstNodeId == currentNodeId)// || c.SecondNodeId == currentNodeId)
+                .Where(c => c.FirstNodeId == currentNodeId)
                 .ToList();
 
             foreach (var connection in neighborConnections)

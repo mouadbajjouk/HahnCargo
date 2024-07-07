@@ -47,7 +47,7 @@ app.MapHub<MessageHub>("/message-hub").RequireCors(builder =>
     builder.WithOrigins("http://localhost:4200")
            .AllowAnyHeader()
            .AllowAnyMethod()
-           .AllowCredentials(); // Ensure credentials are allowed
+           .AllowCredentials();
 });
 
 app.Run();

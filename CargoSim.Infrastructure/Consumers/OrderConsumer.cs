@@ -18,8 +18,7 @@ public class OrderConsumer(IStateService stateService,
                            IHubContext<MessageHub> hubContext,
                            GridWorkerCompletionSignal completionSignal) : IConsumer<OrderMessage>
 {
-    private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
-
+    private static readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public async Task Consume(ConsumeContext<OrderMessage> context)
     {
@@ -43,7 +42,6 @@ public class OrderConsumer(IStateService stateService,
 
                 var newTransporter = await legacyClient.GetTransporter(transporterId) ?? throw new InvalidOperationException("NULL transporter");
 
-                //transporterDb.Add(newTransporter);
 
                 stateService.SetCurrentTransporter(newTransporter);
 
@@ -63,8 +61,6 @@ public class OrderConsumer(IStateService stateService,
                 stateService.SetCurrentOrder(firstOrder);
 
                 stateService.SetCurrentPath(dijkstraResult.path);
-
-                //stateService.SetCurrentPathIndex(stateService.CurrentPathIndex);
 
                 await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {legacyClient.GetCoinAmount()}");
 
@@ -109,7 +105,6 @@ public class OrderConsumer(IStateService stateService,
             if (!OrderEnRoute(shortestPath, stateService.CurrentTransporterPath))
             {
                 await Console.Out.WriteLineAsync($"Order {order.Id} not en route!");
-                //await hubContext.Clients.All.SendAsync("receive-console-message", $"Order {order.Id} not en route!");
 
                 return;
             }

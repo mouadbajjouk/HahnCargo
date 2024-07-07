@@ -20,7 +20,7 @@ public class HahnCargoSimClient(HttpClient httpClient, JwtService jwtService, IS
             token = await jwtService.GetAccessTokenAsync();
         }
         else
-            token = stateService.JwtToken;  // TODO: centralize jwt token
+            token = stateService.JwtToken;
 
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -38,7 +38,7 @@ public class HahnCargoSimClient(HttpClient httpClient, JwtService jwtService, IS
             token = await jwtService.GetAccessTokenAsync();
         }
         else
-            token = stateService.JwtToken;  // TODO: centralize jwt token
+            token = stateService.JwtToken;
 
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -56,7 +56,7 @@ public class HahnCargoSimClient(HttpClient httpClient, JwtService jwtService, IS
             token = await jwtService.GetAccessTokenAsync();
         }
         else
-            token = stateService.JwtToken;  // TODO: centralize jwt token
+            token = stateService.JwtToken;
 
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -77,11 +77,11 @@ public class HahnCargoSimClient(HttpClient httpClient, JwtService jwtService, IS
             token = await jwtService.GetAccessTokenAsync();
         }
         else
-            token = stateService.JwtToken;  // TODO: centralize jwt token
+            token = stateService.JwtToken;
 
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var response = await httpClient.PostAsync($"CargoTransporter/Buy?positionNodeId={atPosition}", null); // TODO: position node isn't always 0 !!!
+        var response = await httpClient.PostAsync($"CargoTransporter/Buy?positionNodeId={atPosition}", null);
 
         response.EnsureSuccessStatusCode();
 
@@ -102,7 +102,7 @@ public class HahnCargoSimClient(HttpClient httpClient, JwtService jwtService, IS
             token = await jwtService.GetAccessTokenAsync();
         }
         else
-            token = stateService.JwtToken;  // TODO: centralize jwt token
+            token = stateService.JwtToken;
 
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -118,7 +118,7 @@ public class HahnCargoSimClient(HttpClient httpClient, JwtService jwtService, IS
             token = await jwtService.GetAccessTokenAsync();
         }
         else
-            token = stateService.JwtToken;  // TODO: centralize jwt token
+            token = stateService.JwtToken;
 
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -136,11 +136,11 @@ public class HahnCargoSimClient(HttpClient httpClient, JwtService jwtService, IS
             token = await jwtService.GetAccessTokenAsync();
         }
         else
-            token = stateService.JwtToken;  // TODO: centralize jwt token
+            token = stateService.JwtToken;
 
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var response = await httpClient.PostAsync("Sim/Stop", null); // TODO: position node isn't always 0 !!!
+        var response = await httpClient.PostAsync("Sim/Stop", null);
 
         response.EnsureSuccessStatusCode();
     }
@@ -154,11 +154,11 @@ public class HahnCargoSimClient(HttpClient httpClient, JwtService jwtService, IS
             token = await jwtService.GetAccessTokenAsync();
         }
         else
-            token = stateService.JwtToken;  // TODO: centralize jwt token
+            token = stateService.JwtToken;
 
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var response = await httpClient.PutAsync($"CargoTransporter/Move?transporterId={transporterId}&targetNodeId={targetNodeId}", null); // TODO: position node isn't always 0 !!!
+        var response = await httpClient.PutAsync($"CargoTransporter/Move?transporterId={transporterId}&targetNodeId={targetNodeId}", null);
 
         response.EnsureSuccessStatusCode();
     }
@@ -172,7 +172,7 @@ public class HahnCargoSimClient(HttpClient httpClient, JwtService jwtService, IS
             token = await jwtService.GetAccessTokenAsync();
         }
         else
-            token = stateService.JwtToken;  // TODO: centralize jwt token
+            token = stateService.JwtToken;
 
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 

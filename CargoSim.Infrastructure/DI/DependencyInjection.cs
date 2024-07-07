@@ -26,11 +26,8 @@ public static class DependencyInjection
         AddMessaging(services, rabbitMqSettings);
 
         services.AddSingleton<GridWorkerCompletionSignal>();
-        //services.AddSingleton<OrderProcessingSignal>();
 
         services.AddHostedService<GridWorkerService>();
-
-       // services.AddHostedService<SimWorkerService>();
 
         return services;
     }
@@ -82,7 +79,7 @@ public static class DependencyInjection
     {
         services.AddHttpClient<IHahnCargoSimClient, HahnCargoSimClient>(httpClient =>
         {
-            httpClient.BaseAddress = new Uri("https://host.docker.internal:7115/"); // TODO : appsettunbgs
+            httpClient.BaseAddress = new Uri("https://host.docker.internal:7115/"); // TODO : appsettings
         }).ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
         {
             ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
@@ -90,7 +87,7 @@ public static class DependencyInjection
 
         services.AddHttpClient<JwtService>(httpClient =>
         {
-            httpClient.BaseAddress = new Uri("https://host.docker.internal:7115/"); // TODO : appsettunbgs
+            httpClient.BaseAddress = new Uri("https://host.docker.internal:7115/"); // TODO : appsettings
         }).ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
         {
             ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
