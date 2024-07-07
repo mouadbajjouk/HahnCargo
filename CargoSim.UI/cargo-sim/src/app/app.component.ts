@@ -8,13 +8,25 @@ import { links, nodes } from './data/graph-data';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import * as shape from 'd3-shape';
+import { HeaderComponent } from './layout/header/header.component';
+import { ButtonModule } from 'primeng/button';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, NgxGraphModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
+  imports: [
+    ToastModule,
+    RouterOutlet,
+    CommonModule,
+    NgxGraphModule,
+    HeaderComponent,
+    ButtonModule,
+  ],
+  providers: [MessageService],
 })
 export class AppComponent {
   title = 'cargo-sim';
@@ -29,12 +41,13 @@ export class AppComponent {
   graphLinks = links;
 
   httpService = inject(HttpService);
+  messageService = inject(MessageService);
 
   centerGraph() {
     this.center$.next(true);
   }
 
-  public InitializeGrid(): void {
+  public initializeGrid(): void {
     this.httpService.get<Graph>(Endpoint.GRAPH).subscribe({
       next: (response) => {
         nodes.push.apply(nodes, response.nodes);
@@ -42,6 +55,45 @@ export class AppComponent {
         links.push.apply(links, response.links);
 
         this.isGraphReady = true;
+      },
+    });
+  }
+
+  public startSimulation(): void {
+    this.httpService.get<Graph>(Endpoint.SIM_START).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Simulation started!',
+          detail: 'Simulation started.',
+          life: 1500,
+        });
+      },
+    });
+  }
+
+  public stopSimulation(): void {
+    this.httpService.get<Graph>(Endpoint.SIM_STOP).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Simulation stopped!',
+          detail: 'Simulation stopped.',
+          life: 1500,
+        });
+      },
+    });
+  }
+
+  public manuallyMove(): void {
+    this.httpService.get<Graph>(Endpoint.MOVE).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Move called!',
+          detail: 'Move called.',
+          life: 1500,
+        });
       },
     });
   }
