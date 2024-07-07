@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CargoSim.Infrastructure", "
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{4CAD6063-4554-476D-8682-E6215E90671C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "CargoSim.Shared\Shared\Shared.csproj", "{43C833AC-7EA0-4FE9-8ADC-CF6DFD51AAD8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CargoSim.Shared", "CargoSim.Shared\Shared\CargoSim.Shared.csproj", "{43C833AC-7EA0-4FE9-8ADC-CF6DFD51AAD8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
