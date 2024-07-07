@@ -1,8 +1,10 @@
 using CargoSim.Application;
-using CargoSim.Infrastructure;
 using CargoSim.Infrastructure.DI;
+using Shared.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSignalR();
 
 builder.Services.AddCors(options =>
 {
@@ -39,5 +41,13 @@ app.UseCors();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<MessageHub>("/message-hub").RequireCors(builder =>
+{
+    builder.WithOrigins("http://localhost:4200")
+           .AllowAnyHeader()
+           .AllowAnyMethod()
+           .AllowCredentials(); // Ensure credentials are allowed
+});
 
 app.Run();

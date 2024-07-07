@@ -11,6 +11,7 @@ public interface IStateService
     Transporter CurrentTransporter { get; set; }
     List<int> CurrentTransporterPath { get; set; }
     string JwtToken { get; set; }
+    TimeSpan NextMoveTimeSpan { get; set; }
 
     void SetCurrentOrder(OrderMessage currentOrder);
     void SetCurrentPath(List<int> currentPath);

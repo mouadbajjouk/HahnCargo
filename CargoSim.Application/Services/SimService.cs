@@ -2,7 +2,9 @@
 using CargoSim.Application.Abstractions.Services;
 using CargoSim.Application.Abstractions.Storage;
 using CargoSim.Application.Models;
+using Microsoft.AspNetCore.SignalR;
 using Shared;
+using Shared.Hubs;
 
 namespace CargoSim.Application.Services;
 
@@ -11,6 +13,7 @@ public class SimService(IHahnCargoSimClient legacyClient,
                         IGridDb gridDb,
                         ITransporterDb transporterDb,
                         IStateService stateService,
+                        IHubContext<MessageHub> hubContext,
                         IDijkstraService dijkstraService) : ISimService
 {
     public Graph GetGraph()
@@ -87,7 +90,7 @@ public class SimService(IHahnCargoSimClient legacyClient,
 
             if (!OrderEnRoute(shortestPath, transporterPath))
             {
-                Console.Write($"Order {order.Id} not en route!");
+                await Console.Out.WriteLineAsync($"Order {order.Id} not en route!");
 
                 continue;
             }
@@ -155,6 +158,8 @@ public class SimService(IHahnCargoSimClient legacyClient,
     public async Task Move(bool firstTime)
     {
         stateService.CurrentTransporter = await GetCargo()!; // TODO: null
+        await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
+
 
         var orders = orderDb.GetOrders();
 
@@ -183,6 +188,13 @@ public class SimService(IHahnCargoSimClient legacyClient,
             //await legacyClient.Move(stateService.CurrentTransporter.Id, stateService.CurrentTransporterPath[stateService.CurrentPathIndex + 1]);
             await legacyClient.Move(stateService.CurrentTransporter.Id, stateService.CurrentTransporterPath[1]);
 
+            await hubContext.Clients.All.SendAsync("receive-console-message", $"Moving transporter {stateService.CurrentTransporter.Id} from {stateService.CurrentTransporterPath[0]}->{stateService.CurrentTransporterPath[1]}");
+            await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
+
+            stateService.NextMoveTimeSpan = GetConnectionTimeSpan(stateService.CurrentTransporterPath[0], stateService.CurrentTransporterPath[1]);
+
+            await hubContext.Clients.All.SendAsync("receive-next-move-timespan", $"{stateService.NextMoveTimeSpan}");
+
             stateService.CurrentTransporterPath.RemoveAt(0);
 
             return;
@@ -192,6 +204,10 @@ public class SimService(IHahnCargoSimClient legacyClient,
 
         if (stateService.CurrentOrder is null || stateService.CurrentTransporter.InTransit)
         {
+            await hubContext.Clients.All.SendAsync("receive-console-message", $"Can't move transporter {stateService.CurrentTransporter.Id}, it's in transit!");
+            await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
+
+
             return;
         }
 
@@ -203,9 +219,19 @@ public class SimService(IHahnCargoSimClient legacyClient,
                 orderDb.Delete(orderDb.GetOrders().Find(order => order.Id == stateService.CurrentOrder.Id));
 
                 stateService.SetCurrentOrder(orderDb.GetOrders().First()); // TODO: like a queue, maybe implement a queue instead of list !!!
+
+                await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
             }
 
             await legacyClient.Move(stateService.CurrentTransporter.Id, stateService.CurrentTransporterPath[stateService.CurrentPathIndex + 1]);
+
+            await hubContext.Clients.All.SendAsync("receive-console-message", $"Moving transporter {stateService.CurrentTransporter.Id} from {stateService.CurrentTransporterPath[0]}->{stateService.CurrentTransporterPath[1]}");
+            await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
+
+            stateService.NextMoveTimeSpan = GetConnectionTimeSpan(stateService.CurrentTransporterPath[0], stateService.CurrentTransporterPath[1]);
+
+            await hubContext.Clients.All.SendAsync("receive-next-move-timespan", $"{stateService.NextMoveTimeSpan}");
+
 
             stateService.CurrentTransporterPath.RemoveAt(stateService.CurrentPathIndex);
 
@@ -223,6 +249,7 @@ public class SimService(IHahnCargoSimClient legacyClient,
             orderDb.Delete(orderDb.GetOrders().Find(order => order.Id == stateService.CurrentOrder.Id));
 
             stateService.SetCurrentOrder(orderDb.GetOrders().First()); // TODO: like a queue, maybe implement a queue instead of list !!!
+            await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
 
             //stateService.SetCurrentPath(dijkstraResult.path); // transporter path has the global path
 
@@ -231,5 +258,13 @@ public class SimService(IHahnCargoSimClient legacyClient,
 
 
         //stateService.SetCurrentPathIndex(stateService.CurrentPathIndex + 1);
+    }
+
+    private TimeSpan GetConnectionTimeSpan(int originNodeId, int targetNodeId)
+    {
+        var connection = gridDb.Connections.Single(connection => connection.FirstNodeId == originNodeId
+                                                              && connection.SecondNodeId == targetNodeId);
+
+        return gridDb.Edges.Single(edge => edge.Id == connection.EdgeId).Time;
     }
 }

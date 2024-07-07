@@ -19,6 +19,8 @@ public class StateService : IStateService // TODO: set setters to private
 
     public List<int> CurrentTransporterPath { get; set; } = [];
 
+    public TimeSpan NextMoveTimeSpan { get; set; } = TimeSpan.Zero;
+
     public void SetCurrentOrder(OrderMessage currentOrder) => CurrentOrder = currentOrder;
 
     public void SetCurrentPath(List<int> currentPath) => CurrentOrderPath = currentPath;
