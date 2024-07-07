@@ -47,4 +47,10 @@ public class SimController(ISimService simService, IStateService stateService) :
     {
         await simService.Start();
     }
+
+    [HttpGet("stop")]
+    public async Task Stop()
+    {
+        await simService.Stop();
+    }
 }

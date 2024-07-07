@@ -17,6 +17,7 @@ public class SimService(IHahnCargoSimClient legacyClient,
     {
         var graphNodes = gridDb.Nodes.ToList().ConvertAll(node => new GraphNode(node.Id, node.Name));
 
+        var p = gridDb.Connections.ToList().Select(c=>c.Id).ToList().GroupBy(g=>g).Where(w=>w.Count()>1).Select(s=>s.Key);
 
         var graphLinks = gridDb.Connections.ToList().ConvertAll(connection => new GraphLink(connection.Id,
                                                                                             connection.FirstNodeId.ToString(),
