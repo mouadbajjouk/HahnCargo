@@ -7,6 +7,7 @@ using CargoSim.Infrastructure.Storage;
 using CargoSim.Infrastructure.WorkerServices;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
+using Shared.Utils;
 
 namespace CargoSim.Infrastructure.DI;
 

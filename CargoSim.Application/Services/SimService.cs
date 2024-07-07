@@ -5,13 +5,13 @@ using CargoSim.Application.Models;
 using Microsoft.AspNetCore.SignalR;
 using Shared;
 using Shared.Hubs;
+using Shared.Utils;
 
 namespace CargoSim.Application.Services;
 
 public class SimService(IHahnCargoSimClient legacyClient,
                         IOrderDb orderDb,
                         IGridDb gridDb,
-                        ITransporterDb transporterDb,
                         IStateService stateService,
                         IHubContext<MessageHub> hubContext,
                         IDijkstraService dijkstraService) : ISimService
@@ -45,31 +45,21 @@ public class SimService(IHahnCargoSimClient legacyClient,
     public async Task Move(bool firstTime)
     {
         stateService.CurrentTransporter = await GetCargo()!; // TODO: null
-        await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
 
-        var orders = orderDb.GetOrders();
+        await HubWriter.Write(hubContext, "receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
 
         if (firstTime)
         {
-            await legacyClient.Move(stateService.CurrentTransporter.Id, stateService.CurrentTransporterPath[1]);
-
-            await hubContext.Clients.All.SendAsync("receive-console-message", $"Moving transporter {stateService.CurrentTransporter.Id} from {stateService.CurrentTransporterPath[0]}->{stateService.CurrentTransporterPath[1]}");
-            await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
-
-            stateService.NextMoveTimeSpan = GetConnectionTimeSpan(stateService.CurrentTransporterPath[0], stateService.CurrentTransporterPath[1]);
-
-            await hubContext.Clients.All.SendAsync("receive-next-move-timespan", $"{stateService.NextMoveTimeSpan}");
-
-            stateService.CurrentTransporterPath.RemoveAt(0);
+            await HandleTransporterMove(legacyClient, stateService, hubContext);
 
             return;
         }
 
         if (stateService.CurrentOrder is null || stateService.CurrentTransporter.InTransit)
         {
-            await hubContext.Clients.All.SendAsync("receive-console-message", $"Can't move transporter {stateService.CurrentTransporter.Id}, it's in transit!");
-            await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
+            await HubWriter.Write(hubContext, "receive-console-message", $"Can't move transporter {stateService.CurrentTransporter.Id}, it's in transit!");
 
+            await HubWriter.Write(hubContext, "receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
 
             return;
         }
@@ -79,34 +69,44 @@ public class SimService(IHahnCargoSimClient legacyClient,
             if (stateService.CurrentOrder.TargetNodeId == stateService.CurrentTransporterPath[stateService.CurrentPathIndex])
             {
                 // order arrived
-                orderDb.Delete(orderDb.GetOrders().Find(order => order.Id == stateService.CurrentOrder.Id));
+                await HandleOrderArrived(legacyClient, orderDb, stateService, hubContext);
 
-                stateService.SetCurrentOrder(orderDb.GetOrders().First()); // TODO: like a queue, maybe implement a queue instead of list !!!
-
-                await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
+                await legacyClient.AcceptOrder(orderDb.GetOrders().First().Id);
             }
 
-            await legacyClient.Move(stateService.CurrentTransporter.Id, stateService.CurrentTransporterPath[stateService.CurrentPathIndex + 1]);
-
-            await hubContext.Clients.All.SendAsync("receive-console-message", $"Moving transporter {stateService.CurrentTransporter.Id} from {stateService.CurrentTransporterPath[0]}->{stateService.CurrentTransporterPath[1]}");
-            await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
-
-            stateService.NextMoveTimeSpan = GetConnectionTimeSpan(stateService.CurrentTransporterPath[0], stateService.CurrentTransporterPath[1]);
-
-            await hubContext.Clients.All.SendAsync("receive-next-move-timespan", $"{stateService.NextMoveTimeSpan}");
-
-            stateService.CurrentTransporterPath.RemoveAt(stateService.CurrentPathIndex);
+            await HandleTransporterMove(legacyClient, stateService, hubContext);
         }
         else
         {
             // order arrived
             // ++ coins
 
-            orderDb.Delete(orderDb.GetOrders().Find(order => order.Id == stateService.CurrentOrder.Id));
-
-            stateService.SetCurrentOrder(orderDb.GetOrders().First()); // TODO: like a queue, maybe implement a queue instead of list !!!
-            await hubContext.Clients.All.SendAsync("receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
+            await HandleOrderArrived(legacyClient, orderDb, stateService, hubContext);
         }
+    }
+
+    private async Task HandleTransporterMove(IHahnCargoSimClient legacyClient, IStateService stateService, IHubContext<MessageHub> hubContext)
+    {
+        await legacyClient.Move(stateService.CurrentTransporter.Id, stateService.CurrentTransporterPath[1]);
+
+        await HubWriter.Write(hubContext, "receive-console-message", $"Moving transporter {stateService.CurrentTransporter.Id} from {stateService.CurrentTransporterPath[0]}->{stateService.CurrentTransporterPath[1]}");
+
+        await HubWriter.Write(hubContext, "receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
+
+        stateService.NextMoveTimeSpan = GetConnectionTimeSpan(stateService.CurrentTransporterPath[0], stateService.CurrentTransporterPath[1]);
+
+        await HubWriter.Write(hubContext, "receive-next-move-timespan", $"{stateService.NextMoveTimeSpan}");
+
+        stateService.CurrentTransporterPath.RemoveAt(stateService.CurrentPathIndex);
+    }
+
+    private static async Task HandleOrderArrived(IHahnCargoSimClient legacyClient, IOrderDb orderDb, IStateService stateService, IHubContext<MessageHub> hubContext)
+    {
+        orderDb.Delete(orderDb.GetOrders().Find(order => order.Id == stateService.CurrentOrder.Id));
+
+        stateService.SetCurrentOrder(orderDb.GetOrders().First()); // TODO: like a queue, maybe implement a queue instead of list !!!
+
+        await HubWriter.Write(hubContext, "receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
     }
 
     private TimeSpan GetConnectionTimeSpan(int originNodeId, int targetNodeId)

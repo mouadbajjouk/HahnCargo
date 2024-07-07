@@ -144,7 +144,7 @@ public class DijkstraService(IGridDb gridDb) : IDijkstraService
 
         if (distances[targetNodeId].Cost == int.MaxValue)
         {
-            await Console.Out.WriteLineAsync("No path to the target node was found.");
+            await Console.Out.WriteLineAsync("No path found.");
             return ([], 0, false);
         }
 
@@ -154,7 +154,7 @@ public class DijkstraService(IGridDb gridDb) : IDijkstraService
 
         if (pathCoins > availableCoins)
         {
-            await Console.Out.WriteLineAsync("Insufficient coins to deliver the order.");
+            await Console.Out.WriteLineAsync("Not enough coins to deliver the order!");
             return ([], pathCoins, false);
         }
 
