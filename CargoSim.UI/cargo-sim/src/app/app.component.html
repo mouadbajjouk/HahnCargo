@@ -58,4 +58,15 @@
     severity="danger"
   />
   <p-button (click)="manuallyMove()" label="Manually Move" size="small" />
+
+  <p-button (click)="createOrder()" label="Create Order" size="small" />
+
+  <p>{{coins}}</p>
+
+  <p>Next move in: {{nextMoveTimeSpan}}</p>
+</div>
+
+
+<div *ngFor="let message of messages">
+  {{ message }}
 </div>

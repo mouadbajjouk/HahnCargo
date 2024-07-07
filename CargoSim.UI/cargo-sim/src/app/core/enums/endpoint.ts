@@ -4,4 +4,5 @@ export enum Endpoint {
   SIM_START = 'simulation/start',
   SIM_STOP = 'simulation/stop',
   GRAPH = 'simulation/graph',
+  CREATE_ORDER = 'simulation/orders/create',
 }
