@@ -61,12 +61,14 @@
 
   <p-button (click)="createOrder()" label="Create Order" size="small" />
 
-  <p>{{coins}}</p>
+  <p>{{ coins }}</p>
 
-  <p>Next move in: {{nextMoveTimeSpan}}</p>
+  <p>Next move in: {{ nextMoveTimeSpan }}</p>
 </div>
 
-
-<div *ngFor="let message of messages">
+<div
+  *ngFor="let message of messages"
+  [ngClass]="{ 'text-red-500': message.toLowerCase().includes('transporter') }"
+>
   {{ message }}
 </div>

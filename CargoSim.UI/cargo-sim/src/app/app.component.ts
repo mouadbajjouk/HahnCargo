@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { NgxGraphModule, NgxGraphZoomOptions } from '@swimlane/ngx-graph';
+import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { HttpService } from './core/services/http.service';
 import { Endpoint } from './core/enums/endpoint';
 import { Graph } from './models/graph';
@@ -201,10 +201,10 @@ export class AppComponent implements OnInit, OnDestroy {
         this.updateDisplay(totalSeconds);
       } else {
         clearInterval(this.countdownInterval);
-        // Wait for 1 second before calling manuallyMove, workaround to fix move endpoint when transporter InTransit
+        // Wait for 2 seconds before calling manuallyMove, workaround to fix move endpoint when transporter InTransit
         setTimeout(() => {
           this.manuallyMove();
-        }, 1000);
+        }, 2000);
       }
     }, 1000);
   }

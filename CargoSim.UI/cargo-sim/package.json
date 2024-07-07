@@ -20,6 +20,8 @@
     "@angular/router": "^17.3.0",
     "@microsoft/signalr": "^8.0.0",
     "@swimlane/ngx-graph": "^8.4.0",
+    "@types/d3": "^7.4.3",
+    "d3": "^7.9.0",
     "d3-shape": "^3.2.0",
     "primeflex": "^3.3.1",
     "primeicons": "^7.0.0",
