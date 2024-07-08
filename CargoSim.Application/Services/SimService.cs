@@ -3,7 +3,6 @@ using CargoSim.Application.Abstractions.Services;
 using CargoSim.Application.Abstractions.Storage;
 using CargoSim.Application.Models;
 using Microsoft.AspNetCore.SignalR;
-using Shared;
 using Shared.Hubs;
 using Shared.Utils;
 
@@ -19,7 +18,7 @@ public class SimService(IHahnCargoSimClient legacyClient,
     public async Task Start() => await legacyClient.StartSimulation();
 
     public async Task Stop() => await legacyClient.StopSimulation();
-    
+
     public Graph GetGraph()
     {
         var graphNodes = gridDb.Nodes.ToList().ConvertAll(node => new GraphNode(node.Id, node.Name));
@@ -41,10 +40,10 @@ public class SimService(IHahnCargoSimClient legacyClient,
     {
         await legacyClient.CreateOrders();
     }
- 
+
     public async Task Move(bool firstTime)
     {
-        stateService.CurrentTransporter = await GetCargo()!; // TODO: null
+        stateService.CurrentTransporter = await GetCargo(); // TODO: null
 
         await HubWriter.Write(hubContext, "receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
 
@@ -71,15 +70,19 @@ public class SimService(IHahnCargoSimClient legacyClient,
                 // order arrived
                 await HandleOrderArrived(legacyClient, orderDb, stateService, hubContext);
 
-                await legacyClient.AcceptOrder(orderDb.GetOrders().First().Id);
+                await HubWriter.Write(hubContext, "receive-coins", $"Coins: {await legacyClient.GetCoinAmount()}");
+
+                await HandleTransporterMove(legacyClient, stateService, hubContext);
+            }
+            else
+            {
+                await HandleTransporterMove(legacyClient, stateService, hubContext);
             }
 
-            await HandleTransporterMove(legacyClient, stateService, hubContext);
         }
         else
         {
             // order arrived
-            // ++ coins
 
             await HandleOrderArrived(legacyClient, orderDb, stateService, hubContext);
         }
