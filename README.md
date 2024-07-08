@@ -14,6 +14,7 @@ Analyze the grid beforehand in `GridWorkerService.cs` to optimize transport rout
 
 Implement logic to handle the purchase of new transporters when relevant, based on current coin balance and transportation needs.
 
+Implement logic to assign new incoming orders to transporters if they have been idle for some time.
 ### 3. Code Refactoring
 
 - Fix existing TODOs in the codebase.
