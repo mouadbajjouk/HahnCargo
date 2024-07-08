@@ -2,6 +2,8 @@
 using CargoSim.Infrastructure.DI;
 using CargoSim.Infrastructure.Storage;
 using Microsoft.Extensions.Hosting;
+using Polly;
+using Polly.Retry;
 
 namespace CargoSim.Infrastructure.WorkerServices;
 
@@ -10,14 +12,20 @@ public class GridWorkerService(IHahnCargoSimClient legacyClient, GridWorkerCompl
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var x = await legacyClient.GetGrid();
+        AsyncRetryPolicy retryPolicy = Policy.Handle<Exception>()
+                                             .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-        GridDb.Instance.SetNodes(x.Nodes);
+        await retryPolicy.ExecuteAsync(async () =>
+        {
+            var x = await legacyClient.GetGrid();
 
-        GridDb.Instance.SetEdges(x.Edges);
+            GridDb.Instance.SetNodes(x.Nodes);
 
-        GridDb.Instance.SetConnections(x.Connections);
+            GridDb.Instance.SetEdges(x.Edges);
 
-        completionSignal.CompletionSource.SetResult(true);
+            GridDb.Instance.SetConnections(x.Connections);
+
+            completionSignal.CompletionSource.SetResult(true);
+        });
     }
 }
