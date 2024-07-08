@@ -13,14 +13,14 @@ export class HttpService {
 
   get<T>(endpoint: Endpoint, options?: any): Observable<T> {
     return this.httpClient.get<T>(
-      'https://localhost:51084/api/' + endpoint,
+      'https://localhost:58105/api/' + endpoint,
       options
     ) as Observable<T>;
   }
 
   post<T>(endpoint: Endpoint, data: any, options?: any): Observable<T> {
     return this.httpClient.post<T>(
-      'https://localhost:51084/api/' + endpoint,
+      'https://localhost:58105/api/' + endpoint,
       data,
       options
     ) as Observable<T>;

@@ -204,7 +204,7 @@ export class AppComponent implements OnInit, OnDestroy {
         // Wait for 2 seconds before calling manuallyMove, workaround to fix move endpoint when transporter InTransit
         setTimeout(() => {
           this.manuallyMove();
-        }, 2000);
+        }, 3000);
       }
     }, 1000);
   }
