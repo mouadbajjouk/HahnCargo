@@ -18,7 +18,7 @@ export class CargoRealtimeClientService {
 
   private async startConnection() {
     this.hubConnection = new HubConnectionBuilder()
-      .withUrl('https://localhost:59067/message-hub')
+      .withUrl('https://localhost:51084/message-hub')
       .build();
 
     try {
